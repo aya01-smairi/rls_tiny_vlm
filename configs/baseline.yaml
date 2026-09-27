@@ -1,0 +1,25 @@
+# Main model configuration (architecture + training hyperparameters).
+# Referenced from the results table in README.md as configs/baseline.yaml.
+# Main model configuration
+
+seed: 0
+
+device: cpu
+
+processed_dir: data
+
+batch_size: 32
+
+d_model: 128
+n_heads: 4
+n_layers: 4
+
+lr: 0.001
+
+n_epochs: 10
+
+overfit_steps: 300
+
+num_workers: 0
+
+checkpoint_dir: experiments/checkpoints
