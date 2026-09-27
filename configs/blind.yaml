@@ -1,3 +1,27 @@
 # E1 blind-baseline configuration: same model as baseline.yaml, but images
 # are replaced by zeros (or shuffled) to test whether the model actually
 # uses the image. See Project Brief, section 8 (E1).
+
+seed: 0
+
+device: cuda
+
+processed_dir: data
+
+batch_size: 32
+
+d_model: 128
+n_heads: 4
+n_layers: 4
+
+lr: 0.001
+
+n_epochs: 10
+
+overfit_steps: 300
+
+num_workers: 0
+
+checkpoint_dir: experiments/checkpoints_blind
+
+blind: true
