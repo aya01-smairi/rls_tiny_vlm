@@ -20,7 +20,7 @@ from src.model.decoder import TransformerDecoder, build_mask
 
 class TinyVLM(nn.Module): 
     def __init__(self, vocab_size: int = 27, pad_id: int = 26, d_model: int = 128, 
-                 n_heads: int = 4, n_layers: int = 4, max_letters: int = 45, 
+                 n_heads: int = 4, n_layers: int = 4, max_letters: int = 46, 
                  dropout: float = 0.1):
         super().__init__()
         self.d_model = d_model
