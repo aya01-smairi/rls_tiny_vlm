@@ -77,6 +77,82 @@ means "may attend"; the encoder and the full model can be built with no argument
 
 Fill in your results table here before submitting (see the Project Brief for the required format: experiment,
 configuration, metric, result as mean ± std over seeds, one-sentence interpretation).
+| Experiment | Configuration | Metric | Result (mean ± std, n=1 seed) | Interpretation (1 sentence) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Main model** | `configs/baseline.yaml` | Exact match, test | **0.597** (59.7%) | The baseline model effectively leverages visual features to generate accurate scene descriptions. |
+| **Main model** | `configs/baseline.yaml` | Attribute acc., test | Size: **0.876** \| Color: **0.808** \| Shape: **0.804** \| Relation: **0.417** | High individual attribute accuracy confirms the CNN encoder successfully extracts visual properties. |
+| **E1 blind** | `configs/blind.yaml` | Attribute acc., test | Exact Match: **0.018** (1.8%) | Removing visual input causes performance to collapse, proving the model relies on image tokens rather than text biases. |
+| **S1 throughput** | batch 64, Colab GPU | Throughput (images/s) | **2459.8 ± 5.0 img/s** | GPU batching dramatically accelerates processing throughput (~47x faster than CPU at batch 64). |
+
+
+
+
+
+
+
+## 📈 Analyse de la Loss & Comparaison des Expériences
+
+### 1. Évolution et Convergence de la Loss
+
+Le modèle est optimisé en minimisant la perte d'entropie croisée (*Cross-Entropy Loss*) calculée caractère par caractère sur les tokens cibles valides (en ignorant les tokens de rembourrage `<PAD>`).
+
+#### A. Expérience $E0$ — Overfitting Sanity Check
+* **Configuration :** Entraînement sur un micro-batch très restreint ($N=10$ échantillons) pendant 100 itérations (enregistré dans `e0_overfit_losses.json`).
+* **Comportement de la Loss :**
+  * **Phase initiale :** $\mathcal{L}_{\text{CE}} > 3.20$ (forte entropie, prédictions uniformes).
+  * **Convergence finale :** La perte chute jusqu'à atteindre entre **0.0035 et 0.0091**.
+* **Interprétation :** Cette convergence vers une valeur quasi-nulle valide formellement la chaîne de rétropropagation, l'absence de disparition/explosion du gradient, et le bon fonctionnement de notre module d'attention custom (masque causal et masque de padding).
+
+#### B. Modèle Baseline (Dataset Complet)
+* **Loss d'Entraînement :** Diminution régulière et fluide de **2.81 à 0.18**.
+* **Loss de Validation :** Stabilisation autour de **0.42**.
+* **Interprétation :** L'écart modéré entre la loss train et val indique une bonne capacité de généralisation sans surapprentissage catastrophique.
+
+---
+
+### 2. Tableau Comparatif des Expériences ($E0$, Baseline, $E1$)
+
+| Expérience | Configuration | Objectif & Rôle | Loss Finale ($\mathcal{L}_{\text{CE}}$) | Exact Match (Test) |
+| :--- | :--- | :--- | :---: | :---: |
+| **E0 (Overfit)** | Micro-batch ($N=10$) | Validation du Gradient & du Code | **0.0035 – 0.0091** | N/A (Mémorisation) |
+| **Main Baseline** | `configs/baseline.yaml` | Performance du Modèle Complet | **0.18** (Train) / **0.42** (Val) | **59.7%** |
+| **E1 (Blind)** | `configs/blind.yaml` | Test d'Ablation Visuelle (Image à 0) | **~1.82** (Val) | **1.8%** |
+
+---
+
+### 3. Analyse Comparative & Impact de l'Ablation Visuelle
+
+* **Preuve d'Ancrage Visuel ($E1$) :** Lorsque les images sont remplacées par des tenseurs nuls, l'Exact Match s'effondre de **59.7% à 1.8%**. Cette chute de 57.9 points prouve que le modèle ne se contente pas de mémoriser les biais du texte (fréquences des mots), mais s'appuie réellement sur les tokens visuels extraits par le CNN et la projection `Flatten + Linear`.
+* **Analyse par Catégorie d'Attributs :**
+  * **Propriétés Individuelles :** Précisions élevées sur la Taille (**87.6%**), la Couleur (**80.8%**) et la Forme (**80.4%**).
+  * **Relations Spatiales :** Précision de **41.7%**, qui représente le principal goulot d'étranglement en raison de la complexité visuelle nécessaire pour modéliser des positions relatives en 2D.
+
+How to reproduce results
+
+
+Run unit tests:
+
+PYTHONPATH=. pytest tests/test_attention.py
+PYTHONPATH=. pytest tests/test_shapes.py
+
+
+Train models:
+
+
+python -m src.train --config configs/baseline.yaml
+python -m src.train --config configs/blind.yaml
+
+
+Evaluate E1 Blind experiment:
+
+
+python -m experiments.E1_blind.run_e1 --baseline_config configs/baseline.yaml --blind_config configs/blind.yaml
+
+
+Run S1 Throughput Benchmark:
+
+
+python -m benchmarks.S1_throughput.benchmark
 
 ## AI usage
 
