@@ -16,7 +16,7 @@ n_layers: 4
 
 lr: 0.001
 
-n_epochs: 10
+n_epochs: 15
 
 overfit_steps: 300
 
